@@ -18,13 +18,14 @@ final class CircularBufferTests: XCTestCase {
         buffer.append(4)
         buffer.append(5)
         XCTAssertEqual(buffer.count, 5)
+        XCTAssertEqual(Array(buffer), [1,2,3,4,5])
 
         buffer.append(6)
         buffer.append(7)
         buffer.append(8)
         buffer.append(9)
-        buffer.append(10)
         XCTAssertEqual(buffer.count, 5)
+        XCTAssertEqual(Array(buffer), [5,6,7,8,9])
     }
 
     func testReduce() {
