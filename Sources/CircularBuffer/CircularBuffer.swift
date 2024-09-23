@@ -80,10 +80,10 @@ public struct CircularBuffer<Element> {
 extension CircularBuffer : Sequence {
 
     /// Required by `Sequence`.
-    public typealias Iterator = CircularIterator<Element>
+    public typealias Iterator = CircularIterator
 
     /// Required by `Sequence`.
-    public struct CircularIterator<Element> : IteratorProtocol {
+    public struct CircularIterator: IteratorProtocol {
 
         /// A back-reference to the circular buffer the iterator is used with.
         @usableFromInline
