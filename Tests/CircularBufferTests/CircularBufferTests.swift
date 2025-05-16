@@ -1,98 +1,166 @@
-import XCTest
+import Testing
 @testable import CircularBuffer
 
-final class CircularBufferTests: XCTestCase {
+@Suite struct CircularBufferTests {
 
-    func testArrayLiteralExpressible() {
+    @Test func arrayLiteralExpressible() {
         let buffer: CircularBuffer<Int> = [1,2,3,4,5]
-        XCTAssertEqual(buffer.count, 5)
+        #expect(buffer.count == 5)
     }
 
-    func testExpandsUpToCapacity() {
+    @Test func expandsUpToCapacity() {
         var buffer = CircularBuffer<Int>(capacity: 5)
-        XCTAssertEqual(buffer.count, 0)
+        #expect(buffer.count == 0)
 
         buffer.append(1)
         buffer.append(2)
         buffer.append(3)
         buffer.append(4)
         buffer.append(5)
-        XCTAssertEqual(buffer.count, 5)
-        XCTAssertEqual(buffer, [1,2,3,4,5])
+        #expect(buffer.count == 5)
+        #expect(buffer == [1,2,3,4,5])
 
         buffer.append(6)
         buffer.append(7)
         buffer.append(8)
         buffer.append(9)
-        XCTAssertEqual(buffer.count, 5)
-        XCTAssertEqual(buffer, [5,6,7,8,9])
+        #expect(buffer.count == 5)
+        #expect(buffer == [5,6,7,8,9])
     }
 
-    func testReduce() {
+    @Test func mapUnfilled() {
+        var buffer = CircularBuffer<Int>(capacity: 5)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        let mapped = buffer.map { $0 * 2 }
+        #expect(mapped == [2,4,6])
+    }
+
+    @Test func mapFilled() {
+        var buffer = CircularBuffer<Int>(capacity: 5)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        let mapped = buffer.map { $0 * 2 }
+        #expect(mapped == [2,4,6,8,10])
+    }
+
+    @Test func mapOverfilled() {
+        var buffer = CircularBuffer<Int>(capacity: 3)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        let mapped = buffer.map { $0 * 2 }
+        #expect(mapped == [6,8,10])
+    }
+
+    @Test func enumeratedUnfilled() {
+        var buffer = CircularBuffer<Int>(capacity: 5)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        let mapped = buffer.enumerated().map {
+            Twople($0.offset, $0.element * 2)
+        }
+        #expect(mapped == [ Twople(0,2), Twople(1,4), Twople(2,6) ])
+    }
+
+    @Test func enumeratedFilled() {
+        var buffer = CircularBuffer<Int>(capacity: 5)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        let mapped = buffer.enumerated().map {
+            Twople($0.offset, $0.element * 2)
+        }
+        #expect(mapped == [ Twople(0,2), Twople(1,4), Twople(2,6), Twople(3,8), Twople(4,10) ])
+    }
+
+    @Test func enumeratedOverfilled() {
+        var buffer = CircularBuffer<Int>(capacity: 3)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        let mapped = buffer.enumerated().map {
+            Twople($0.offset, $0.element * 2)
+        }
+        #expect(mapped == [ Twople(0,6), Twople(1,8), Twople(2,10) ])
+    }
+
+    @Test func reduce() {
         let buffer: CircularBuffer<Int> = [1,1,1,1,1]
-        XCTAssertEqual(buffer.reduce(0, +), 5)
+        #expect(buffer.reduce(0, +) == 5)
     }
 
-    func testReplaceSubrange_sameNumberOfValues() {
+    @Test func replaceSubrange_sameNumberOfValues() {
         var buffer: CircularBuffer<Int> = [1,1,1,1,1]
         buffer.replaceSubrange(buffer.startIndex..<buffer.endIndex, with: Array([2,3,4,5,6]))
-        XCTAssertEqual(buffer, [2,3,4,5,6])
+        #expect(buffer == [2,3,4,5,6])
     }
 
-    func testReplaceSubrange_firstFewOnly() {
+    @Test func replaceSubrange_firstFewOnly() {
         var buffer: CircularBuffer<Int> = [1,1,1,1,1]
         buffer.replaceSubrange(buffer.startIndex..<buffer.endIndex, with: Array([2,3,4]))
-        XCTAssertEqual(buffer, [2,3,4,1,1])
+        #expect(buffer == [2,3,4,1,1])
     }
 
-    func testReplaceSubrange_wrappingAround() {
+    @Test func replaceSubrange_wrappingAround() {
         var buffer: CircularBuffer<Int> = [1,1,1,1,1]
         let start = buffer.startIndex.incrementedByOne()
         let end = buffer.endIndex.incrementedByOne()
         buffer.replaceSubrange(start..<end, with: Array([2,3,4,5,6]))
-        XCTAssertEqual(buffer, [6,2,3,4,5])
+        #expect(buffer == [6,2,3,4,5])
     }
 
-    func testRepeatingCount() {
+    @Test func repeatingCount() {
         let buffer = CircularBuffer<Int>(repeating: 5, count: 5)
-        XCTAssertEqual(buffer, [5,5,5,5,5])
+        #expect(buffer == [5,5,5,5,5])
     }
 
-    func testInitWithSequence() {
+    @Test func initWithSequence() {
         var buffer = CircularBuffer<Int>(Array([1,2,3,4,5]))
-        XCTAssertEqual(buffer, [1,2,3,4,5])
+        #expect(buffer == [1,2,3,4,5])
 
         buffer.append(6)
         buffer.append(7)
         buffer.append(8)
-        XCTAssertEqual(buffer, [4,5,6,7,8])
+        #expect(buffer == [4,5,6,7,8])
     }
 
-    func testAppendContentsOf_fewerThanCapacity() {
+    @Test func appendContentsOf_fewerThanCapacity() {
         var buffer: CircularBuffer<Int> = [1,2,3,4,5]
         buffer.append(contentsOf: Array([9,9,9]))
-        XCTAssertEqual(buffer, [4,5,9,9,9])
+        #expect(buffer == [4,5,9,9,9])
     }
 
-    func testAppendContentsOf_greaterThanCapacity() {
+    @Test func appendContentsOf_greaterThanCapacity() {
         var buffer: CircularBuffer<Int> = [1,2,3,4,5]
         buffer.append(contentsOf: Array([6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]))
-        XCTAssertEqual(buffer, [16,17,18,19,20])
+        #expect(buffer == [16,17,18,19,20])
     }
 
-    func testInsertElementAtStart() {
+    @Test func insertElementAtStart() {
         var buffer: CircularBuffer<Int> = [1,1,1,1,1]
         buffer.insert(9, at: buffer.startIndex)
-        XCTAssertEqual(buffer, [9,1,1,1,1])
+        #expect(buffer == [9,1,1,1,1])
     }
 
-    func testInsertElementAtEnd() {
+    @Test func insertElementAtEnd() {
         var buffer: CircularBuffer<Int> = [1,1,1,1,1]
         buffer.insert(9, at: buffer.endIndex)
-        XCTAssertEqual(buffer, [9,1,1,1,1]) // the end is the beginning
+        #expect(buffer == [9,1,1,1,1]) // the end is the beginning
     }
 
-    func testInsertElementAtPenultimate() {
+    @Test func insertElementAtPenultimate() {
         var buffer: CircularBuffer<Int> = [1,1,1,1,1]
         let index = buffer.startIndex
             .incrementedByOne()
@@ -100,10 +168,10 @@ final class CircularBufferTests: XCTestCase {
             .incrementedByOne()
             .incrementedByOne()
         buffer.insert(9, at: index)
-        XCTAssertEqual(buffer, [1,1,1,1,9])
+        #expect(buffer == [1,1,1,1,9])
     }
 
-    func testDropLast() {
+    @Test func dropLast() {
         var buffer = CircularBuffer<Int>(capacity: 99)
         buffer.append(1)
         buffer.append(2)
@@ -111,7 +179,156 @@ final class CircularBufferTests: XCTestCase {
         buffer.append(4)
         buffer.append(5)
         let slice = buffer.dropLast()
-        XCTAssertEqual(Array(slice), [1,2,3,4])
+        #expect(Array(slice) == [1,2,3,4])
+    }
+
+    @Test func dropFirst() {
+        var buffer = CircularBuffer<Int>(capacity: 4)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        let slice = buffer.dropFirst()
+        #expect(Array(slice) == [2])
+    }
+
+    @Test func removeFirstDoesntWrap() {
+        var buffer = CircularBuffer<Int>(capacity: 5)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        let first = buffer.removeFirst()
+        #expect(first == 1)
+        #expect(Array(buffer) == [2,3])
+    }
+
+    @Test func removeFirstWraps() {
+        var buffer = CircularBuffer<Int>(capacity: 3)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        let first = buffer.removeFirst()
+        #expect(first == 3)
+        #expect(Array(buffer) == [4,5])
+    }
+
+    @Test func removeFirstNDoesntWrap() {
+        var buffer = CircularBuffer<Int>(capacity: 5)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.removeFirst(2)
+        #expect(Array(buffer) == [3])
+    }
+
+    @Test func removeFirstNWraps() {
+        var buffer = CircularBuffer<Int>(capacity: 4)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        buffer.removeFirst(2)
+        #expect(Array(buffer) == [4,5])
+    }
+
+    @Test func removeAllWhere() {
+        var buffer = CircularBuffer<Int>(capacity: 5)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        buffer.removeAll(where: { $0.isMultiple(of: 2) })
+        #expect(Array(buffer) == [1,3,5])
+        buffer.append(6)
+        buffer.append(7)
+        buffer.append(8)
+        #expect(Array(buffer) == [3,5,6,7,8])
+        buffer.removeAll(where: { $0 < 7 })
+        #expect(Array(buffer) == [7,8])
+        buffer.append(9)
+        buffer.append(10)
+        buffer.append(11)
+        #expect(Array(buffer) == [7,8,9,10,11])
+    }
+
+    @Test func removeAtStart() {
+        var buffer = CircularBuffer<Int>(capacity: 5)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        let removed = buffer.remove(at: buffer.startIndex)
+        #expect(removed == 1)
+        #expect(Array(buffer) == [2,3,4,5])
+    }
+
+    @Test func removeAtMiddle() {
+        var buffer = CircularBuffer<Int>(capacity: 5)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        let removed = buffer.remove(at: buffer.startIndex.incrementedByOne().incrementedByOne())
+        #expect(removed == 3)
+        #expect(Array(buffer) == [1,2,4,5])
+    }
+
+    @Test func removeAtMiddleWrapped() {
+        var buffer = CircularBuffer<Int>(capacity: 5)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        buffer.append(6)
+        buffer.append(7)
+        let removed = buffer.remove(at: buffer.startIndex.incrementedByOne().incrementedByOne())
+        #expect(removed == 5)
+        #expect(Array(buffer) == [3,4,6,7])
+    }
+
+    @Test func removeAtEnd() {
+        var buffer = CircularBuffer<Int>(capacity: 5)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        let removed = buffer.remove(at: buffer.endIndex)
+        #expect(removed == 1)
+        #expect(Array(buffer) == [2,3,4,5])
+    }
+
+    @Test func removeAtEndWrapped() {
+        var buffer = CircularBuffer<Int>(capacity: 5)
+        buffer.append(1)
+        buffer.append(2)
+        buffer.append(3)
+        buffer.append(4)
+        buffer.append(5)
+        buffer.append(6)
+        buffer.append(7)
+        let removed = buffer.remove(at: buffer.endIndex)
+        #expect(removed == 3)
+        #expect(Array(buffer) == [4,5,6,7])
+    }
+
+}
+
+private struct Twople: Equatable {
+
+    let offset, element: Int
+
+    init(_ offset: Int, _ element: Int) {
+        self.offset = offset
+        self.element = element
     }
 
 }
